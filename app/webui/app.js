@@ -145,16 +145,19 @@ function renderSoon(c) {
 
 // ---- schedule ----
 async function renderSchedule(c) {
-  c.appendChild(h(`<div class="page-head fade-in"><h1>Schedule</h1><p>Choose which days to auto-book, and at what time.</p></div>`));
-  const card = h(`<div class="card card-pad sched-card fade-in">
+  c.appendChild(h(`<div class="page-head fade-in"><h1>Schedule</h1><p>Pick the days to book, the time, and who's playing.</p></div>`));
+  const host = h(`<div class="fade-in" style="display:flex;flex-direction:column;gap:18px;max-width:660px"></div>`);
+  c.appendChild(host);
+
+  let s;
+  try { s = await api("settings"); } catch (e) { host.appendChild(h(`<div class="card card-pad"><div class="empty">Couldn't load settings: ${esc(e.message)}</div></div>`)); return; }
+  const card = h(`<div class="card card-pad">
+    <div class="card-title">Booking days</div>
     <div id="day-rows"></div>
     <div class="sched-note">${ICON.info}<span>Each enabled day is booked automatically <b>15 days ahead</b>, the moment tee times unlock at 7:00&nbsp;pm. If 8:12 is taken, the booker walks to the nearest earlier slot.</span></div>
     <div class="sched-foot"><button class="btn btn-primary" id="btn-save" style="flex:0 0 auto">Save changes</button></div>
   </div>`);
-  c.appendChild(card);
-
-  let s;
-  try { s = await api("settings"); } catch (e) { card.innerHTML = `<div class="empty">Couldn't load settings: ${esc(e.message)}</div>`; return; }
+  host.appendChild(card);
   const days = JSON.parse(JSON.stringify(s.days || {}));
   const rows = $("#day-rows", card);
   DAY_KEYS.forEach((k) => {
@@ -181,6 +184,8 @@ async function renderSchedule(c) {
     } catch (e) { toast(String(e.message || e), "err"); }
     finally { btn.disabled = false; btn.textContent = "Save changes"; }
   };
+
+  host.appendChild(partnersCard(s));
 }
 
 // ---- dashboard ----
@@ -380,13 +385,12 @@ async function refreshBookings(silent) {
 const DAY_CHIP = ["Mo","Tu","We","Th","Fr","Sa","Su"];
 
 async function renderAccount(c) {
-  c.appendChild(h(`<div class="page-head fade-in"><h1>Account</h1><p>Your golf-site login and playing partners.</p></div>`));
+  c.appendChild(h(`<div class="page-head fade-in"><h1>Account</h1><p>Your golf-site login, stored only on this computer.</p></div>`));
   const host = h(`<div class="fade-in" style="display:flex;flex-direction:column;gap:18px;max-width:640px"></div>`);
   c.appendChild(host);
   let s;
   try { s = await api("settings"); } catch (e) { host.appendChild(h(`<div class="card card-pad"><div class="empty">Couldn't load: ${esc(e.message)}</div></div>`)); return; }
   host.appendChild(loginCard(s));
-  host.appendChild(partnersCard(s));
 }
 
 function busyBtn(btn, label) { btn.disabled = true; btn._old = btn.innerHTML; btn.innerHTML = `<span class="spin-mini"></span>${label}`; }
