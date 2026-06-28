@@ -48,6 +48,16 @@ Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription:
 ; The entire embeddable-python bundle produced by build_bundle.py.
 Source: "dist\TeeOff\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion
 
+[InstallDelete]
+; Shed the now-unused UI toolkit (customtkinter/Tcl-Tk) left over from pre-1.3 installs.
+Type: filesandordirs; Name: "{app}\python\Lib\site-packages\customtkinter"
+Type: filesandordirs; Name: "{app}\python\Lib\site-packages\darkdetect"
+Type: filesandordirs; Name: "{app}\python\Lib\tkinter"
+Type: filesandordirs; Name: "{app}\python\tcl"
+Type: files; Name: "{app}\python\_tkinter.pyd"
+Type: files; Name: "{app}\python\tcl86t.dll"
+Type: files; Name: "{app}\python\tk86t.dll"
+
 [Icons]
 Name: "{autoprograms}\TeeOff"; Filename: "{app}\python\pythonw.exe"; Parameters: "-m app.webapp"; WorkingDir: "{app}"; IconFilename: "{app}\app\assets\icon.ico"
 Name: "{autodesktop}\TeeOff"; Filename: "{app}\python\pythonw.exe"; Parameters: "-m app.webapp"; WorkingDir: "{app}"; IconFilename: "{app}\app\assets\icon.ico"; Tasks: desktopicon

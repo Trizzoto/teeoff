@@ -78,30 +78,8 @@ def main() -> None:
     step("bootstrap pip")
     subprocess.run([str(python_dir / "python.exe"), str(GET_PIP)], check=True)
 
-    step("copy tkinter + Tcl/Tk from system Python (embeddable doesn't include them)")
-    sys_py = Path(r"C:\Users\ruuva\AppData\Local\Programs\Python\Python311")
-    if not sys_py.exists():
-        raise SystemExit(
-            f"Need a regular Python 3.11 install at {sys_py} to copy tkinter from. "
-            "Install python 3.11.9 from python.org and rerun."
-        )
-    # DLLs needed by tkinter
-    for fname in ("_tkinter.pyd", "tcl86t.dll", "tk86t.dll", "zlib1.dll"):
-        src = sys_py / "DLLs" / fname
-        if src.exists():
-            shutil.copy2(src, python_dir / fname)
-    # tkinter Python package
-    tk_pkg_src = sys_py / "Lib" / "tkinter"
-    tk_pkg_dst = python_dir / "Lib" / "tkinter"
-    if tk_pkg_dst.exists():
-        shutil.rmtree(tk_pkg_dst)
-    shutil.copytree(tk_pkg_src, tk_pkg_dst, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
-    # Tcl/Tk runtime files
-    tcl_src = sys_py / "tcl"
-    tcl_dst = python_dir / "tcl"
-    if tcl_dst.exists():
-        shutil.rmtree(tcl_dst)
-    shutil.copytree(tcl_src, tcl_dst, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+    # tkinter / Tcl-Tk are no longer bundled: the v1.3 web UI (app.webapp) runs in an
+    # Edge window and needs neither. The booker + web server are pure stdlib + requests.
 
     step("install runtime dependencies into python/Lib/site-packages")
     subprocess.run(

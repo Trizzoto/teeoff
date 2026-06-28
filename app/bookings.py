@@ -66,9 +66,12 @@ def _detect_user_name(client: MiClubClient, cfg: ResolvedConfig, today: date) ->
     return None
 
 
-def fetch_existing_bookings(window_days: int = 60) -> dict:
+def fetch_existing_bookings(window_days: int = 75, past_days: int = 90) -> dict:
     """Return {"fetched_at": iso, "user": str, "bookings": [...]}.
-    Bookings: [{"date": "YYYY-MM-DD", "time": "08:12 am", "event_id": int, "partners": [str,...]}]"""
+    Bookings: [{"date": "YYYY-MM-DD", "time": "08:12 am", "event_id": int, "partners": [str,...]}]
+
+    Scans both PAST (Results) and upcoming (Open) TIMESHEET events so the calendar
+    shows the full booking history as well as what's coming up."""
     cfg = resolve(load_settings())
     started_at = datetime.now()
     out: dict = {"fetched_at": started_at.isoformat(timespec="seconds"), "user": None, "bookings": []}
@@ -86,9 +89,10 @@ def fetch_existing_bookings(window_days: int = 60) -> dict:
     last_name = user_name.split(",")[0].strip()
     out["user"] = user_name
 
+    start = today - timedelta(days=past_days)
     end = today + timedelta(days=window_days)
     try:
-        events = parse_spring_events(client.fetch_events_json(today, end, cfg.resource_id))
+        events = parse_spring_events(client.fetch_events_json(start, end, cfg.resource_id))
     except Exception as e:
         out["error"] = f"events fetch failed: {e}"
         return out

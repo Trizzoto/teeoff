@@ -13,7 +13,7 @@ import threading
 from typing import Any
 
 from . import updater
-from .bookings import fetch_existing_bookings, load_cache
+from .bookings import fetch_existing_bookings, load_cache, save_cache
 from .paths import LAST_RUN_PATH, LOGS_DIR
 from .planning import calendar_days, recent_runs, upcoming_fires
 from .scheduler import get_info, register, set_paused
@@ -122,9 +122,11 @@ def _set_paused(payload: dict) -> dict:
 
 
 def _refresh_bookings(_p: dict) -> dict:
-    """Blocking on-site bookings fetch (login + scrape). Returns the fresh data."""
+    """Blocking on-site bookings fetch (login + scrape). Persists + returns the data."""
     data = fetch_existing_bookings()
     live = data.get("bookings", []) or []
+    if "error" not in data:
+        save_cache(data)  # persist so the dashboard/calendar read the fresh bookings
     s = load_settings()
     return {
         "ok": "error" not in data,
@@ -221,13 +223,15 @@ def _activity(_p: dict) -> dict:
     return {"runs": recent_runs(), "last_run": _last_run()}
 
 
-def _open_logs(_p: dict) -> dict:
+def _booker_log(_p: dict) -> dict:
+    """The rolling booker.log (tail), shown in-app on the Activity page."""
+    p = LOGS_DIR / "booker.log"
     try:
-        LOGS_DIR.mkdir(parents=True, exist_ok=True)
-        os.startfile(str(LOGS_DIR))  # type: ignore[attr-defined]
-        return {"ok": True}
+        if p.exists():
+            return {"text": p.read_text(encoding="utf-8", errors="replace")[-24000:]}
     except Exception as e:
-        return {"ok": False, "error": str(e)}
+        return {"text": "", "error": str(e)}
+    return {"text": ""}
 
 
 _ROUTES = {
@@ -246,5 +250,5 @@ _ROUTES = {
     "refresh_partners": _refresh_partners,
     "save_partners": _save_partners,
     "activity": _activity,
-    "open_logs": _open_logs,
+    "booker_log": _booker_log,
 }

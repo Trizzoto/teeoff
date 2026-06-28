@@ -30,6 +30,7 @@ const DEMO = {
   activity: { last_run: null, runs: [
     { when: "2026-06-17T19:00:02", kind: "ok", title: "[Wednesday] OK — booked 08:12", detail: "Tee Off booking summary — fire target 2026-06-17T19:00:02\n\n[Wednesday] OK — booked 08:12\n  - 08:12 OK send=+651ms rtt=439ms" },
     { when: "2026-06-15T19:00:02", kind: "ok", title: "[Monday] OK — booked 08:12", detail: "[Monday] OK — booked 08:12" }] },
+  booker_log: { text: "2026-06-17 18:55:00 [INFO] booker.main: config: play_days=['monday', 'wednesday']\n2026-06-17 18:55:01 [INFO] booker.main: logging in...\n2026-06-17 18:55:01 [INFO] booker.main: logged in\n2026-06-17 18:55:02 [INFO] booker.main: [Wednesday] prepared 11 candidate slot(s)\n2026-06-17 19:00:02 [INFO] booker.main: fire! drift=2ms\n2026-06-17 19:00:02 [INFO] booker.main: [Wednesday] OK — booked 08:12" },
   save_days: { ok: true, status: DEMO_STATUS, upcoming: [] },
   set_paused: { ok: true, status: DEMO_STATUS },
   check_update: { update: null, version: "1.2.3" },
@@ -101,8 +102,11 @@ const fmtClock = (iso) => { try { const d = new Date(iso); return d.toLocaleStri
     $("#splash").classList.add("fade");
     $("#app").classList.add("show");
     setTimeout(() => $("#splash").remove(), 500);
-    // background: pull fresh on-site bookings if the cache looks empty/old
-    if (!state.dash?.bookings_synced || !state.dash.bookings_synced.count) refreshBookings(true);
+    // Pull fresh on-site bookings only when the cache is stale (>4h) or missing — keeps
+    // the calendar current without re-scraping the site on every quick relaunch.
+    const sync = state.dash?.bookings_synced;
+    const fresh = sync && sync.at && (Date.now() - new Date(sync.at).getTime() < 4 * 3600 * 1000);
+    if (!fresh) refreshBookings(true);
     setTimeout(() => checkUpdate(true), 1500);  // quiet auto update-check on launch
   } catch (e) {
     conn.classList.add("err"); $(".spin", conn)?.remove();
@@ -206,7 +210,6 @@ function renderStatusCard(card) {
     <div class="status-row"><span class="status-led ${led}"></span><span class="status-name">${name}</span></div>
     <div class="status-sub">${esc(sub)}</div>
     ${lastRunHTML(lr)}
-    ${state.dash.email_enabled ? "" : `<div class="warn-banner">${ICON.warn}<span>Email alerts are off — results show here in the app.</span></div>`}
     <div class="btn-row">
       <button class="btn ${s.paused ? "btn-primary" : "btn-ghost"}" id="btn-pause" ${!s.registered ? "disabled" : ""}>
         ${s.paused ? ICON.play + "Resume" : ICON.pause + "Pause"}
@@ -377,14 +380,13 @@ async function refreshBookings(silent) {
 const DAY_CHIP = ["Mo","Tu","We","Th","Fr","Sa","Su"];
 
 async function renderAccount(c) {
-  c.appendChild(h(`<div class="page-head fade-in"><h1>Account</h1><p>Your golf-site login, playing partners, and email alerts.</p></div>`));
+  c.appendChild(h(`<div class="page-head fade-in"><h1>Account</h1><p>Your golf-site login and playing partners.</p></div>`));
   const host = h(`<div class="fade-in" style="display:flex;flex-direction:column;gap:18px;max-width:640px"></div>`);
   c.appendChild(host);
   let s;
   try { s = await api("settings"); } catch (e) { host.appendChild(h(`<div class="card card-pad"><div class="empty">Couldn't load: ${esc(e.message)}</div></div>`)); return; }
   host.appendChild(loginCard(s));
   host.appendChild(partnersCard(s));
-  host.appendChild(emailCard(s));
 }
 
 function busyBtn(btn, label) { btn.disabled = true; btn._old = btn.innerHTML; btn.innerHTML = `<span class="spin-mini"></span>${label}`; }
@@ -447,41 +449,17 @@ function partnersCard(s) {
   return card;
 }
 
-function emailCard(s) {
-  const em = s.email || {};
-  let enabled = !!em.enabled;
-  const card = h(`<div class="card card-pad form-card">
-    <div class="card-title">Email alerts</div>
-    <div class="card-sub">Optional — a summary email after each booking run. Needs a Gmail address and an app password.</div>
-    <div class="inline-toggle"><div class="toggle ${enabled ? "on" : ""}" id="em-toggle"><div class="knob"></div></div><span class="label">Send email alerts</span></div>
-    <div class="field"><label>From (Gmail address)</label><input id="em-user" value="${esc(em.smtp_user || "")}" placeholder="you@gmail.com"></div>
-    <div class="field"><label>Gmail app password</label><input id="em-pass" type="password" placeholder="${em.has_app_password ? "•••••••• (unchanged)" : "16-character app password"}"></div>
-    <div class="field"><label>Send alerts to</label><input id="em-to" value="${esc(em.notify_to || "")}" placeholder="where to send the summary"></div>
-    <div class="foot-row"><button class="btn btn-primary" id="em-save">Save email</button><button class="btn btn-ghost" id="em-test">Send test</button></div>
-  </div>`);
-  $("#em-toggle", card).onclick = () => { enabled = !enabled; $("#em-toggle", card).classList.toggle("on", enabled); };
-  $("#em-save", card).onclick = async () => {
-    const btn = $("#em-save", card); busyBtn(btn, "Saving…");
-    try { await api("save_email", { enabled, smtp_user: $("#em-user", card).value, smtp_app_password: $("#em-pass", card).value, notify_to: $("#em-to", card).value }); $("#em-pass", card).value = ""; toast("Email settings saved"); }
-    catch (e) { toast(String(e.message || e), "err"); } finally { freeBtn(btn); }
-  };
-  $("#em-test", card).onclick = async () => {
-    const btn = $("#em-test", card); busyBtn(btn, "Sending…");
-    try { const r = await api("send_test_email"); toast(r.ok ? `Test email sent to ${r.to}` : (r.error || "Send failed"), r.ok ? "ok" : "err"); }
-    catch (e) { toast(String(e.message || e), "err"); } finally { freeBtn(btn); }
-  };
-  return card;
-}
-
 // ---- activity ----
 async function renderActivity(c) {
-  c.appendChild(h(`<div class="page-head fade-in"><h1>Activity</h1><p>Every booking run is recorded here — successes, failures, and crashes.</p></div>`));
-  const wrap = h(`<div class="fade-in"></div>`); c.appendChild(wrap);
-  let data;
+  c.appendChild(h(`<div class="page-head fade-in"><h1>Activity</h1><p>Every booking run, plus the full log — all here, no need to dig through files.</p></div>`));
+  const wrap = h(`<div class="fade-in" style="max-width:800px"></div>`); c.appendChild(wrap);
+  let data, logText = "";
   try { data = await api("activity"); } catch (e) { wrap.appendChild(h(`<div class="card card-pad"><div class="empty">Couldn't load activity: ${esc(e.message)}</div></div>`)); return; }
+  try { logText = (await api("booker_log")).text || ""; } catch {}
   const runs = data.runs || [];
+
   const list = h(`<div class="act-list"></div>`);
-  if (!runs.length) list.appendChild(h(`<div class="empty">No booking runs recorded yet — they'll appear here automatically.</div>`));
+  if (!runs.length) list.appendChild(h(`<div class="empty">No booking runs recorded yet — they appear here automatically after the booker fires.</div>`));
   runs.forEach((r) => {
     const item = h(`<div class="act-item"><div class="act-head"><span class="act-dot ${esc(r.kind)}"></span><div class="act-main"><div class="act-title">${esc(r.title)}</div><div class="act-when">${esc(fmtClock(r.when))}</div></div></div></div>`);
     let open = false;
@@ -489,6 +467,11 @@ async function renderActivity(c) {
     list.appendChild(item);
   });
   wrap.appendChild(list);
-  wrap.appendChild(h(`<div class="foot-row" style="margin-top:18px"><button class="btn btn-ghost" id="open-logs" style="flex:0 0 auto">Open logs folder</button></div>`));
-  $("#open-logs", wrap).onclick = async () => { try { await api("open_logs"); } catch {} };
+
+  if (logText) {
+    wrap.appendChild(h(`<div class="card-title" style="margin:26px 0 10px">Full log</div>`));
+    const log = h(`<div class="act-detail" style="max-height:360px">${esc(logText)}</div>`);
+    wrap.appendChild(log);
+    log.scrollTop = log.scrollHeight;
+  }
 }
