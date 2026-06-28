@@ -1,0 +1,23 @@
+.env
+.env.local
+*.pyc
+__pycache__/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+*.log
+logs/
+*.har
+*.mht
+.DS_Store
+.idea/
+.vscode/
+
+# Build output + anything carrying the real login (never commit these)
+dist/
+build/
+.teeoff-data/
+settings.seed.json
+settings.local.json
+settings.json

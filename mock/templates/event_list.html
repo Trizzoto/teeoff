@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html><head><title>View Event List</title></head><body>
+<h1>Patawalonga Course Bookings</h1>
+<form id="eventListForm" action="/views/members/booking/eventList.xhtml" method="post">
+  <input type="hidden" name="javax.faces.ViewState" value="mock-vs-1">
+</form>
+<ul>
+{% for event in events %}
+  <li>
+    <span>{{ event.date_label }}</span>
+    <span>OPEN</span>
+    <span>{{ event.title }}</span>
+    <a href="/members/bookings/open/event.msp?booking_event_id={{ event.event_id }}&booking_resource_id={{ resource_id }}">{{ event.title }}</a>
+  </li>
+{% endfor %}
+</ul>
+</body></html>

@@ -1,0 +1,8 @@
+<!DOCTYPE html>
+<html><head><title>Confirm Booking</title></head><body>
+<h1>Booking Confirmed</h1>
+<p>{{ event_title }} — {{ time_label }} — {{ players|length }} player(s)</p>
+<ul>
+  {% for p in players %}<li>{{ p.name }} ({{ p.golflink }})</li>{% endfor %}
+</ul>
+</body></html>

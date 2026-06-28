@@ -1,0 +1,9 @@
+requests==2.32.3
+beautifulsoup4==4.12.3
+python-dotenv==1.0.1
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+jinja2==3.1.4
+tzdata==2024.2
+python-multipart==0.0.20
+customtkinter==5.2.2

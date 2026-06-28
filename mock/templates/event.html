@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html><head><title>Private Club : Booking Event</title></head><body>
+<h1>{{ event.title }}</h1>
+<div class="date">{{ event.date_label }}</div>
+<form action="CompactView.msp" method="post">
+  <input type="hidden" name="doAction" value="">
+  <input type="hidden" name="rows" value="{{ rows_csv }}">
+  <input type="hidden" name="cells" value="">
+  <input type="hidden" name="booking_resource_id" value="{{ resource_id }}">
+  <input type="hidden" name="booking_event_id" value="{{ event.event_id }}">
+  <input type="hidden" name="timestamp_start_time" value="{{ ts }}">
+</form>
+<div class="timesheet">
+{% for slot in event.slots %}
+  <div id="row-{{ slot.row_id }}" class="row row-time group-{{ event.event_id }} time-{{ slot.row_id }} {% if slot.is_available %}available{% else %}booked{% endif %}">
+    <span class="time">{{ slot.time_label() }}</span>
+    {% if slot.is_available and is_open %}
+      <button class="btn btn-book-group" onclick="javascript:checkAutomaticBook({{ event.event_id }},{{ slot.row_id }},{{ slot.available_count }},true,false,false,false)">BOOK GROUP</button>
+      {% for cell in slot.cells %}
+        {% if cell %}<span>BOOKED</span>{% else %}<button class="btn btn-book-me">Book Me</button>{% endif %}
+      {% endfor %}
+    {% else %}
+      {% for cell in slot.cells %}<span>BOOKED</span>{% endfor %}
+    {% endif %}
+  </div>
+{% endfor %}
+</div>
+</body></html>

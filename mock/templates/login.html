@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html><head><title>Private Club : Members Section</title></head><body>
+<h1>Login</h1>
+{% if error %}<div class="error">{{ error }}</div>{% endif %}
+<form action="/security/login.msp" method="post">
+  <input type="hidden" name="action" value="login">
+  <label>Your Username <input type="text" name="user"></label>
+  <label>Password <input type="password" name="password"></label>
+  <button type="submit" name="Submit" value="Login">Login</button>
+</form>
+</body></html>

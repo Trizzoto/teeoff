@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html><body>
+<form action="/members/bookings/open/MakeBooking.msp" method="get">
+  <input type="hidden" name="doAction" value="FAST_BOOK">
+  <input type="hidden" name="booking_event_id" value="{{ event_id }}">
+  <input type="hidden" name="booking_row_id" value="{{ row_id }}">
+  <input type="hidden" name="booking_group_id" value="">
+  <input type="hidden" name="times_free" value="{{ times_free }}">
+  <input type="hidden" name="bookLinkedEvent" value="false">
+  <input type="hidden" name="numberOfHoles" value="18">
+  <input type="hidden" name="group_name" value="">
+  <input type="hidden" name="title" value="{{ event_title }}">
+  {% for p in partners %}
+    <input type="hidden" name="freeRecord.id" value="{{ loop.index0 }}">
+    <input type="hidden" name="memberId_{{ loop.index0 }}" value="{{ p.id }}">
+    <input type="hidden" name="memberName_{{ loop.index0 }}" value="{{ p.name }}">
+    <input type="hidden" name="golflink_{{ loop.index0 }}" value="{{ p.golflink }}">
+  {% endfor %}
+  <button type="submit">Confirm Booking</button>
+</form>
+</body></html>
