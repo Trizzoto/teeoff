@@ -1816,8 +1816,14 @@ class App(ctk.CTk):
         if getattr(self, "_update_check_inflight", False):
             return
         self._update_check_inflight = True
+        # Safety net: if the network call ever hangs (e.g. during the busy launch),
+        # never leave the lock stuck — clear it after 20s so future checks still work.
+        self.after(20000, lambda: setattr(self, "_update_check_inflight", False))
         def _runner():
-            info = updater.check_for_update()
+            try:
+                info = updater.check_for_update()
+            except Exception:
+                info = None
             self.after(0, lambda: self._on_update_result(info, manual))
         threading.Thread(target=_runner, daemon=True).start()
 
