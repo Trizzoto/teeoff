@@ -253,19 +253,19 @@ def resolve(settings: dict[str, Any] | None = None) -> ResolvedConfig:
             # Migration: v32 format had "enabled" boolean. True → plays all 7 days,
             # False → plays no days. New format uses playing_days directly.
             if "playing_days" in p:
-                days = frozenset(d for d in p["playing_days"] if d in DAY_NAMES)
+                pdays = frozenset(d for d in p["playing_days"] if d in DAY_NAMES)
             elif "enabled" in p:
-                days = all_days_frozen if bool(p["enabled"]) else frozenset()
+                pdays = all_days_frozen if bool(p["enabled"]) else frozenset()
             else:
-                days = all_days_frozen
+                pdays = all_days_frozen
             is_self = bool(p.get("is_self", False))
             if is_self:
-                days = all_days_frozen  # grandpa always plays
+                pdays = all_days_frozen  # grandpa always plays
             partners.append(Partner(
                 id=str(p["id"]),
                 full_name=str(p["full_name"]),
                 is_self=is_self,
-                playing_days=days,
+                playing_days=pdays,
             ))
         except (KeyError, TypeError):
             continue

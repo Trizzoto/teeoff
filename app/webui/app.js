@@ -125,7 +125,7 @@ function updateMiniStatus() {
   const s = state.dash?.status || {};
   const el = $("#mini-status"), txt = $("#mini-status-text");
   el.className = "mini-status " + (!s.registered ? "off" : s.paused ? "paused" : "ok");
-  txt.textContent = !s.registered ? "Not installed" : s.paused ? "Paused" : "Ready";
+  txt.textContent = !s.registered ? "Not set up" : s.paused ? "Paused" : "Active";
 }
 
 // ---- navigation ----
@@ -209,8 +209,13 @@ function renderDashboard(c) {
 function renderStatusCard(card) {
   const s = state.dash.status, lr = state.dash.last_run;
   const led = !s.registered ? "led-off" : s.paused ? "led-paused" : "led-ok";
-  const name = !s.registered ? "Not installed" : s.paused ? "Paused" : "Ready";
-  const sub = !s.registered ? "No schedule installed yet." : `${s.triggers} weekly trigger${s.triggers === 1 ? "" : "s"} installed`;
+  const name = !s.registered ? "Not set up" : s.paused ? "Paused" : "Active";
+  const up0 = (state.dash.upcoming || [])[0];
+  const sub = !s.registered
+    ? "No schedule installed yet."
+    : s.paused
+      ? "Auto-booking is off — it won't book until you resume."
+      : `Auto-booking is on${up0 ? ` · next fires ${up0.fire_pretty}` : ""}`;
   card.innerHTML = `
     <div class="status-row"><span class="status-led ${led}"></span><span class="status-name">${name}</span></div>
     <div class="status-sub">${esc(sub)}</div>

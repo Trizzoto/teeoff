@@ -25,12 +25,14 @@ from bs4 import BeautifulSoup
 from booker.client import MiClubClient
 from booker.parser import parse_event_page, parse_make_booking_form, parse_spring_events
 
+from .paths import DATA_DIR
 from .settings import ResolvedConfig, load_settings, resolve
 
 log = logging.getLogger(__name__)
 
-PROJECT_ROOT = Path(__file__).parent.parent
-CACHE_PATH = PROJECT_ROOT / "logs" / "bookings-cache.json"
+# Live in the fixed per-user data dir so the cache survives reinstalls/updates
+# (was incorrectly under the replaceable install dir).
+CACHE_PATH = DATA_DIR / "bookings-cache.json"
 
 
 def _detect_user_name(client: MiClubClient, cfg: ResolvedConfig, today: date) -> str | None:
