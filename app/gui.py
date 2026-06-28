@@ -1719,8 +1719,22 @@ class App(ctk.CTk):
         _set_windows_app_user_model_id("teeoff.golf.booker.1")
         super().__init__()
         self.title(f"Tee Off Golf Booker  v{__version__}")
-        self.geometry("1020x740")
-        self.minsize(900, 620)
+        self.minsize(700, 460)
+        # customtkinter multiplies the geometry we pass by the DPI scaling factor, while the
+        # screen is reported in (scaled) pixels. Size the window so it FITS *after* scaling
+        # (a 150%-DPI laptop screen is only ~1280x720), then center once it is realized.
+        try:
+            _scale = ctk.ScalingTracker.get_window_scaling(self) or 1.0
+        except Exception:
+            _scale = 1.0
+        _sw, _sh = self.winfo_screenwidth(), self.winfo_screenheight()
+        _w = int(min(1020, (_sw - 80) / _scale))
+        _h = int(min(700, (_sh - 100) / _scale))
+        self.geometry(f"{_w}x{_h}")          # fits-the-screen size (DPI-aware)
+        # Center it once the window is realized. Deferred (with a retry) because calling
+        # this too early — before the window has its rendered size — silently no-ops.
+        self.after(400, self._center_on_screen)
+        self.after(1500, self._center_on_screen)
 
         # Window + taskbar icon
         if ICON_ICO.exists():
@@ -1798,6 +1812,23 @@ class App(ctk.CTk):
         self._navigate("dashboard")
 
         self.protocol("WM_DELETE_WINDOW", self._on_close)
+
+    def _center_on_screen(self) -> None:
+        """Center the window once realized. winfo_width/height come back in logical px but
+        winfo_screenwidth/height and wm_geometry are in physical px, so scale the window
+        size up by the DPI factor before centering (customtkinter quirk)."""
+        try:
+            self.update_idletasks()
+            try:
+                scale = ctk.ScalingTracker.get_window_scaling(self) or 1.0
+            except Exception:
+                scale = 1.0
+            w = int(self.winfo_width() * scale)
+            h = int(self.winfo_height() * scale)
+            sw, sh = self.winfo_screenwidth(), self.winfo_screenheight()
+            self.wm_geometry(f"+{max(0, (sw - w) // 2)}+{max(0, (sh - h) // 2)}")
+        except Exception:
+            pass
 
     def _self_heal_task(self) -> None:
         try:
