@@ -49,14 +49,14 @@ Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription:
 Source: "dist\TeeOff\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion
 
 [Icons]
-Name: "{autoprograms}\TeeOff"; Filename: "{app}\python\pythonw.exe"; Parameters: "-m app.gui"; WorkingDir: "{app}"; IconFilename: "{app}\app\assets\icon.ico"
-Name: "{autodesktop}\TeeOff"; Filename: "{app}\python\pythonw.exe"; Parameters: "-m app.gui"; WorkingDir: "{app}"; IconFilename: "{app}\app\assets\icon.ico"; Tasks: desktopicon
+Name: "{autoprograms}\TeeOff"; Filename: "{app}\python\pythonw.exe"; Parameters: "-m app.webapp"; WorkingDir: "{app}"; IconFilename: "{app}\app\assets\icon.ico"
+Name: "{autodesktop}\TeeOff"; Filename: "{app}\python\pythonw.exe"; Parameters: "-m app.webapp"; WorkingDir: "{app}"; IconFilename: "{app}\app\assets\icon.ico"; Tasks: desktopicon
 
 [Run]
 ; Register the Windows scheduled task pointing at this fixed install dir.
 Filename: "{app}\python\pythonw.exe"; Parameters: "-m app.scheduler register"; WorkingDir: "{app}"; StatusMsg: "Setting up the weekly booking schedule..."; Flags: runhidden waituntilterminated
 ; Offer to open the app at the end (also triggers the self-heal path on launch).
-Filename: "{app}\python\pythonw.exe"; Parameters: "-m app.gui"; WorkingDir: "{app}"; Description: "Open TeeOff now"; Flags: postinstall nowait skipifsilent
+Filename: "{app}\python\pythonw.exe"; Parameters: "-m app.webapp"; WorkingDir: "{app}"; Description: "Open TeeOff now"; Flags: postinstall nowait skipifsilent
 
 [UninstallDelete]
 ; Python writes __pycache__/*.pyc next to the code at runtime, and these aren't

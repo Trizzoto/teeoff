@@ -165,7 +165,7 @@ install = Path(sys.argv[1])
 staging = Path(sys.argv[2])
 SENTINELS = {"app": "version.py", "booker": "main.py"}
 
-time.sleep(2.0)  # let the GUI fully exit so no files are locked
+time.sleep(3.0)  # let the app window fully close so no files are locked
 
 
 def swap(name):
@@ -224,9 +224,9 @@ try:
 except Exception:
     pass
 
-# Relaunch the GUI on the new version.
+# Relaunch the app on the new version.
 try:
-    subprocess.Popen([str(runner), "-m", "app.gui"], cwd=str(install), creationflags=0x00000008)
+    subprocess.Popen([str(runner), "-m", "app.webapp"], cwd=str(install), creationflags=0x00000008)
 except Exception:
     pass
 '''

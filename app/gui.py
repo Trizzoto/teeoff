@@ -1979,6 +1979,15 @@ class App(ctk.CTk):
 
 
 def main() -> None:
+    # Migration shim: the interface moved to the web shell (app.webapp). Old desktop
+    # shortcuts and any pre-1.3 in-app-updater relaunch `app.gui` — bounce them to the
+    # new UI so a code-only update lands on the modern app without a fresh installer.
+    try:
+        from . import webapp
+        webapp.main()
+        return
+    except Exception:
+        logging.exception("web UI failed to start; falling back to the legacy GUI")
     logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
     app = App()
     app.mainloop()

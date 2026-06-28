@@ -152,7 +152,7 @@ def main() -> None:
     (STAGE / "Start Tee Off.bat").write_text(
         "@echo off\r\n"
         "cd /d \"%~dp0\"\r\n"
-        "start \"\" \"%~dp0python\\pythonw.exe\" -m app.gui\r\n",
+        "start \"\" \"%~dp0python\\pythonw.exe\" -m app.webapp\r\n",
         encoding="utf-8",
     )
 
